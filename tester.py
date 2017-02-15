@@ -1,18 +1,28 @@
 #!/usr/bin/python3
 
-# Written by Diwei Chen
-# Email Address: diwei77chen@gmail.com
+# Created:  17 Oct 2016
+# Modified: 20 Nov 2016
+# Author:   Diwei Chen
+# Email:    diwei77chen@gmail.com
+
+# Taking advantage of logistic regression, the goal of this project is to locate segments
+# of text from input document and classify them in one of the pre-defined categories(e.g., 
+# PERSON, LOCATION and ORGNIZATION). In this project, we only perform NER for a single
+# category of TITLE. We define a TITLE as an appellation associated with a person by virtue
+# of occupation, office, birth or as an honorific. For example, in the following sentence,
+# both Prime Minister and MP are TITLES:
+#				Prime Minister Malcolm Turnbull MP visited Germany yesterday.
+
+# Usage: 1st argument: input the path of testing data set
+#		 2nd argument: input the path of a classifier
+#		 3nd argument: input the path for writing testing results
 
 import sys
 import pickle
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-# from sklearn.model_selection import KFold
-# from sklearn import cross_validation
-# from sklearn.metrics import f1_score
-# import matplotlib.pyplot as plt
-# from sklearn.cross_validation import train_test_split
+
 path_to_testing_data = sys.argv[1]
 path_to_classifier = sys.argv[2]
 path_to_results = sys.argv[3]
@@ -37,10 +47,9 @@ feature_vec = []
 result = []
 predict_vec = []
 test_tmp = []
-
 test_target_vector = []
 
-# construct feature vector
+# construct feature vector for testing data set
 def ftvector(test):
 	global bag_of_tags, bag_of_tokens, feature_vec, test_tmp, test_target_vector
 	for index0 in range(len(test)):
@@ -49,6 +58,8 @@ def ftvector(test):
 			index_back1 = index1 + 1
 			index_back2 = index1 + 2
 			feature_vec_tmp = []
+			# Feature0: intercept
+			feature_vec_tmp.append(1)
 			# Feature1: if the token is in bag_of_tokens
 			if test[index0][index1][0] in bag_of_tokens:
 				feature_vec_tmp.append(1)
@@ -85,7 +96,7 @@ def ftvector(test):
 			feature_vec.append(feature_vec_tmp)
 			test_target_vector.append(test[index0][index1][2])
 
-# orgnise result list
+# orgnise the result list to match original data format
 def orgnise(test):
 	global test_tmp, predict_vec, result
 	index_front = 0
@@ -94,42 +105,25 @@ def orgnise(test):
 		result_sentence = []
 		index1 = len(test[index0])
 		index_back += index1
-		# print(index_front)
-		# print(index_back)
-		# break
 		for index in range(index_front, index_back):
 			result_tuple = []
 			result_tuple.append(test_tmp[index])
 			result_tuple.append(predict_vec[index])
 			result_sentence.append(result_tuple)
-		# print(result_sentence)
 		result.append(result_sentence)
 		index_front += index1
-
 
 ftvector(testing_set)
 predict_vec = regr.predict(feature_vec)
 orgnise(testing_set)
 with open(path_to_results, 'wb') as f:
 	pickle.dump(result, f)
-
-
-
-
 with open('predict.dat', 'wb') as f:
 	pickle.dump(predict_vec, f)
 with open('target.dat', 'wb') as f:
 	pickle.dump(test_target_vector, f)
+
+# showing the f1 score for the classifier
 # print(f1_score(feature_vec, predict_vec, average='micro'))
-# print(len(testing_set))
-# print(len(result))
-# print(result)
-# print(len(test_tmp))
-# print(len(predict_vec))
-# print(result[0])
-# print(len(testing_set[0]))
 
 
-# print(bag_of_tokens)
-# print(bag_of_tags)
-# print(regr.coef_)
